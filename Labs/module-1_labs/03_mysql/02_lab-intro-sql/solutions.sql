@@ -18,6 +18,13 @@ FROM olist.order_items
 ORDER BY shipping_limit_date ASC
 LIMIT 1;
 
+-- OR
+
+SELECT
+    MIN(shipping_limit_date)  AS min_shipping_date,
+    MAX(shipping_limit_date) AS max_shipping_date
+FROM olist.order_items;
+
 -- 3. From the customers table, find the 3 states with the greatest number of customers
 
 
@@ -32,48 +39,61 @@ SELECT
 
 -- 4. From the customers table, within the state with the greatest number of customers, find the 3 cities with the greatest number of customers.
 
-
 SELECT
 	customer_city,
 	COUNT(1)
 FROM olist.customers
 WHERE (customer_state='SP')
-GROUP BY customer_city
+GROUP BY customer_city,
+		customer_state
 ORDER BY COUNT(customer_city) DESC
 LIMIT 3;
 
 -- 5. From the closed_deals table, how many distinct business segments are there (not including null)?
 
 SELECT
-	COUNT(business_segment)
-FROM olist.closed_deals
-GROUP BY business_segment
-LIMIT 100;
+	COUNT(DISTINCT business_segment) AS distinct_business
+FROM olist.closed_deals;
 
 -- 6. From the closed_deals table, sum the declared_monthly_revenue for duplicate row values in business_segment and find the 3 business segments with the highest declared monthly revenue (of those that declared revenue).
 
--- SELECT 
---	SUM(declared_monthly_revenue)
--- FROM olist.closed_deals
--- WHERE business_segment
+SELECT business_segment,
+   SUM(declared_monthly_revenue) AS total_declared_monthly_revenue
+FROM olist.closed_deals
+GROUP BY business_segment
+ORDER BY total_declared_monthly_revenue DESC
+LIMIT 3;
 
 -- 7. From the order_reviews table, find the total number of distinct review score values
 
-SELECT distinct
-	count(review_score)
-FROM olist.order_reviews
-GROUP BY review_score
-LIMIT 10;
+SELECT
+	count( DISTINCT review_score)
+FROM olist.order_reviews;
 
 -- 8. In the order_reviews table, create a new column with a description that corresponds to each number category for each review score from 1 - 5.
 
-SELECT *,
-	review_score + review_comment_message AS new_column,
-    IF (review_score>0)
-FROM olist.order_reviews
-GROUP BY review_score,
-	review_comment_message
-LIMIT 10;
+#SOLUTION FROM TA, didn´t understand the question
+
+SELECT
+       review_score,
+    IF(review_score = 1, 'very dissatisfied',
+    IF(review_score = 2, 'moderately dissatisfied',
+    IF(review_score = 3, 'neutral',
+    IF(review_score = 4, 'moderately satisfied',
+    IF(review_score = 5, 'very satisfied','undefined'))))) AS review_category
+FROM olist.order_reviews;
+
+SELECT
+	review_score,
+	CASE
+		WHEN review_score = 1 THEN 'very dissatisfied'
+        WHEN review_score = 2 THEN 'moderately dissatisfied'
+        WHEN review_score = 3 THEN 'neutral'
+        WHEN review_score = 4 THEN 'moderately satisfied'
+        WHEN review_score = 5 THEN 'very satisfied'
+        ELSE 'undefined'
+	END 										AS review_category
+FROM olist.order_reviews;
 
 -- 9. From the order_reviews table, find the review score occurring most frequently and how many times it occurs.
 SELECT
